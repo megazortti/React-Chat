@@ -2,19 +2,32 @@ import { useState, useEffect, useRef } from "react";
 import { v4 as uuid } from "uuid";
 import Draggable from "react-draggable";
 import { FaArrowCircleRight } from "react-icons/fa";
+import { getAuth, signInWithPopup } from "firebase/auth";
+import { app } from "../../Config/firebase.js";
+import useSound from "use-sound";
+import bubbleSound from "../../Assets/sounds/bubble-sound.wav";
+import { getHoursAndMinutes, capitalize } from "../../Assets/utils.js";
+import CryptoJS from "react-native-crypto-js";
+//https://www.npmjs.com/package/hybrid-crypto-js
+
+
 
 export default function Chat() {
+  
+  const [playSound] = useSound(bubbleSound, { volume: 0.1 });
   const [conversation, setConversation] = useState([
     { key: uuid(), message: "Lorem ipsum " },
   ]);
   const chatDiv = useRef(null);
   const [entryText, setEntryText] = useState("");
   const [shouldScroll, setShouldScroll] = useState(false);
+
+  useEffect(() => { playSound(); console.log(conversation);
+  console.log(CryptoJS.AES.encrypt('This is the password i am trying to encrypt', 'music4ever').toString()) }, [conversation])
   async function conversationScrollSystem(ref) {
-    console.log(ref.current);
-    if(ref?.current){
+    if (ref?.current) {
       let scrollableList = ref?.current;
-      if(scrollableList.top == (scrollableList.scrollHeight - scrollableList.clientHeight)){
+      if (scrollableList.top == (scrollableList.scrollHeight - scrollableList.clientHeight)) {
         console.log('Tá no final..');
       }
 
@@ -23,7 +36,7 @@ export default function Chat() {
   async function addText() {
     await setConversation((conversation) => [
       ...conversation,
-      { key: uuid(), message: entryText },
+      { message: entryText, date: new Date().toString() },
     ]);
     setEntryText("");
     chatDiv?.current?.scrollTo({
@@ -32,27 +45,7 @@ export default function Chat() {
     });
     // console.log(chatDiv.current);
   }
-  // useEffect(() => {
-  //   setInterval(() => {
-  //     setConversation((conversation) => [
-  //       ...conversation,
-  //       {
-  //         key: uuid().toString(),
-  //         message:
-  //           "Lorem ipsum dolor sit amet consectetur adipisicing elit. Error quibusdam molestias consectetur libero pariatur perferendis, magni nulla autem eos minus.",
-  //       },
-  //     ]);
-  //     console.log(conversation);
-  //   }, 5000);
-  //   setInterval(() => {
-  //     if (shouldScroll) {
-  //       window.scrollTo({
-  //         top: document.body.scrollHeight,
-  //         behavior: "smooth",
-  //       });
-  //     }
-  //   }, 1000);
-  // }, []);
+
 
   return (
     <>
@@ -66,12 +59,12 @@ export default function Chat() {
           width: "100vw",
           overflowX: "hidden",
         }}
-        onScroll={() => {conversationScrollSystem(chatDiv)}}
+        onScroll={() => { conversationScrollSystem(chatDiv) }}
       >
         <div className="text-light text-center">
           <h1>{entryText}</h1>
         </div>
-        <div>
+        <div id="bubblesDiv">
           {conversation.map((i, key) => {
             return (
               <div
@@ -80,10 +73,13 @@ export default function Chat() {
                 className={key % 2 == 0 ? "flex-right" : "flex-left"}
               >
                 <div id="chat-content">
-                  <div
+                  <div style={{display: 'flex', flexDirection: 'column', alignSelf: 'center'}}
                     id={key % 2 == 0 ? "chat-bubble-right" : "chat-bubble-left"}
                   >
-                    {i.message}
+                    {capitalize(i.message)}
+                    <div id="chat-time" style={{ color: 'white', alignSelf: 'flex-end' }}>
+                      {getHoursAndMinutes(i?.date)}
+                    </div>
                   </div>
                 </div>
               </div>

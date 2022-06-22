@@ -63,6 +63,7 @@ input:focus{
   transform: scale(1.01);
 }
 
+
 #chat-bubble-left {
   border-radius: 60px;
   border-top-left-radius: 0;
@@ -77,6 +78,7 @@ input:focus{
   display: flex;
   justify-content: flex-start;
   max-width: 60vw;
+  min-width: 10vw;
   transition: all 0.5s;
 
 }
@@ -95,24 +97,27 @@ input:focus{
   max-width: 80vw;
   word-break: break-all;
   transition: all 0.5s;
+  min-width: 10vw;
+
 }
 #chat-body {
   display: flex;
   flex: 1;
   transition: all 0.2s;
 }
+
 #chat-bubble-left:hover,
 #chat-bubble-right:hover {
-  transform: scale(1.02);
+  transform: scaleX(1.05);
 }
 
 .flex-left {
   justify-content: flex-start;
-  animation: leftToRight 0.1s linear;
+  animation: leftToRight 0.3s linear;
 }
 .flex-right {
   justify-content: flex-end;
-  animation: RightToLeft 0.1s linear;
+  animation: RightToLeft 0.3s linear;
 }
 .growable{
   transition: transform 0.5s;
@@ -133,3 +138,4 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+

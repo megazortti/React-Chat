@@ -1,7 +1,14 @@
 import * as React from "react";
-import { atom, useRecoilState } from "recoil";
+import { atom, useRecoilState, useRecoilValue } from "recoil";
 import { useState, useEffect } from "react";
-import { loginState } from "./atoms/index";
+import { userState } from "./atoms/index";
+import { firebaseConfig } from './Config/firebase.js';
+import { initializeApp } from "firebase/app";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {beautify_name} from './Assets/utils.js';
+import {getDatabase, ref, set, get} from 'firebase/database';
+
+
 import {
   Navbar,
   Container,
@@ -16,7 +23,31 @@ import Draggable from "react-draggable";
 import Chat from "./Components/Chat/index";
 
 export default function App() {
-  const [isLogged, setIsLogged] = useRecoilState(loginState);
+  const [_userState, _setUserState] = useRecoilState(userState);
+  // Setting up firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+  const database = getDatabase();
+  //////////////////////////////////////////////////////////////
+  useEffect(()=>{
+    if(_userState){console.log(_userState)}
+  },[_userState])
+
+  function logar() {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        _setUserState(result);
+        // ...
+      }).catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+      });
+  }
+
+
+
   return (
     <>
       <Navbar
@@ -28,38 +59,33 @@ export default function App() {
       >
         {/* <Container> */}
         <Navbar.Brand href="#home" style={{ marginLeft: "10px" }}>
-          React-Bootstrap
+          {beautify_name(_userState?.user?.displayName)}
         </Navbar.Brand>
         <Navbar.Toggle
           aria-controls="responsive-navbar-nav"
           style={{ marginRight: "10px" }}
         />
         <Navbar.Collapse id="responsive-navbar-nav">
-          <Nav style={{ marginLeft: "10px" }} className="me-auto">
+          <Nav className="me-auto">
             <Nav.Link href="#features">Features</Nav.Link>
-            <Nav.Link href="#pricing">Pricing</Nav.Link>
-            <NavDropdown title="Dropdown" id="collasible-nav-dropdown">
-              <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
+          </Nav>
+          <Nav style={{  }}>
+            <NavDropdown align="end" title="Configurações" id="collasible-nav-dropdown">
               <NavDropdown.Item href="#action/3.2">
-                Another action
+                Minha conta
               </NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+              <NavDropdown.Item href="#action/3.3">Sair</NavDropdown.Item>
               <NavDropdown.Divider />
               <NavDropdown.Item href="#action/3.4">
-                Separated link
+                Excluir minha conta
               </NavDropdown.Item>
             </NavDropdown>
-          </Nav>
-          <Nav style={{ marginLeft: "10px" }}>
-            <Nav.Link href="#deets">More deets</Nav.Link>
-            <Nav.Link eventKey={2} href="#memes">
-              Dank memes
-            </Nav.Link>
+            
           </Nav>
         </Navbar.Collapse>
         {/* </Container> */}
       </Navbar>
-      {isLogged ? (
+      {!_userState.user ? ( // if user isn't logged yet.. then show him login window.
         <div
           style={{
             display: "flex",
@@ -69,6 +95,7 @@ export default function App() {
             flexWrap: "wrap",
           }}
         >
+          <Button onClick={() => { logar() }}></Button>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(() => {
             return (
               <>
@@ -98,8 +125,9 @@ export default function App() {
           })}
         </div>
       ) : (
-        
-        <Chat style={{display: 'flex', flex: '1', height: '100%'}}/>
+        <>
+          <Chat style={{ display: 'flex', flex: '1', height: '100%' }} />
+        </>
       )}
     </>
   );
