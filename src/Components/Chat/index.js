@@ -3,17 +3,14 @@ import { v4 as uuid } from "uuid";
 import Draggable from "react-draggable";
 import { FaArrowCircleRight } from "react-icons/fa";
 import { getAuth, signInWithPopup } from "firebase/auth";
+import { getDatabase, ref, set } from "firebase/database";
 import { app } from "../../Config/firebase.js";
 import useSound from "use-sound";
 import bubbleSound from "../../Assets/sounds/bubble-sound.wav";
 import { getHoursAndMinutes, capitalize } from "../../Assets/utils.js";
 import CryptoJS from "react-native-crypto-js";
-//https://www.npmjs.com/package/hybrid-crypto-js
-
-
 
 export default function Chat() {
-  
   const [playSound] = useSound(bubbleSound, { volume: 0.1 });
   const [conversation, setConversation] = useState([
     { key: uuid(), message: "Lorem ipsum " },
@@ -21,16 +18,30 @@ export default function Chat() {
   const chatDiv = useRef(null);
   const [entryText, setEntryText] = useState("");
   const [shouldScroll, setShouldScroll] = useState(false);
-
-  useEffect(() => { playSound(); console.log(conversation);
-  console.log(CryptoJS.AES.encrypt('This is the password i am trying to encrypt', 'music4ever').toString()) }, [conversation])
+  const db = getDatabase();
+  // useEffect(() => {}, []);
+  useEffect(() => {
+    playSound();
+    console.log(conversation);
+    let encryptedMessage = CryptoJS.AES.encrypt(
+      "this is the secret message.",
+      "music4ever"
+    ).toString();
+    console.log(
+      CryptoJS.AES.decrypt(encryptedMessage, "music4ever").toString(
+        CryptoJS.enc.Utf8
+      )
+    );
+  }, [conversation]);
   async function conversationScrollSystem(ref) {
     if (ref?.current) {
       let scrollableList = ref?.current;
-      if (scrollableList.top == (scrollableList.scrollHeight - scrollableList.clientHeight)) {
-        console.log('Tá no final..');
+      if (
+        scrollableList.top ==
+        scrollableList.scrollHeight - scrollableList.clientHeight
+      ) {
+        console.log("Tá no final..");
       }
-
     }
   }
   async function addText() {
@@ -46,7 +57,6 @@ export default function Chat() {
     // console.log(chatDiv.current);
   }
 
-
   return (
     <>
       <div
@@ -59,7 +69,9 @@ export default function Chat() {
           width: "100vw",
           overflowX: "hidden",
         }}
-        onScroll={() => { conversationScrollSystem(chatDiv) }}
+        onScroll={() => {
+          conversationScrollSystem(chatDiv);
+        }}
       >
         <div className="text-light text-center">
           <h1>{entryText}</h1>
@@ -73,11 +85,19 @@ export default function Chat() {
                 className={key % 2 == 0 ? "flex-right" : "flex-left"}
               >
                 <div id="chat-content">
-                  <div style={{display: 'flex', flexDirection: 'column', alignSelf: 'center'}}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignSelf: "center",
+                    }}
                     id={key % 2 == 0 ? "chat-bubble-right" : "chat-bubble-left"}
                   >
                     {capitalize(i.message)}
-                    <div id="chat-time" style={{ color: 'white', alignSelf: 'flex-end' }}>
+                    <div
+                      id="chat-time"
+                      style={{ color: "white", alignSelf: "flex-end" }}
+                    >
                       {getHoursAndMinutes(i?.date)}
                     </div>
                   </div>
