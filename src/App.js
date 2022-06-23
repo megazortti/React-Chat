@@ -1,20 +1,20 @@
 import * as React from "react";
 import { atom, useRecoilState, useRecoilValue } from "recoil";
 import { useState, useEffect } from "react";
-import { userState } from "./atoms/index";
+import { userState, actualConversation } from "./atoms/index";
 import { firebaseConfig } from "./Config/firebase.js";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { beautify_name } from "./Assets/utils.js";
 import { User } from "./Assets/structures.js";
 import { getDatabase, ref, set, get, child } from "firebase/database";
+import { Card } from "./Components/Card/index.js";
 
 import {
   Navbar,
   Container,
   NavDropdown,
   Nav,
-  Card,
   Button,
   Col,
   Row,
@@ -24,6 +24,8 @@ import Chat from "./Components/Chat/index";
 
 export default function App() {
   const [_userState, _setUserState] = useRecoilState(userState);
+  const [_actualConversation, _setActualConversation] = useRecoilState(actualConversation);
+  const [users, setUsers] = useState([]);
   // Setting up firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth();
@@ -32,10 +34,15 @@ export default function App() {
   const usersRef = ref(database, "users");
   //////////////////////////////////////////////////////////////
   useEffect(() => {
-    get(databaseRef, "users/").then((snapshot) => {
-      console.log(snapshot.val());
+    get(usersRef).then((snapshot) => {
+      for (const item of Object.entries(snapshot.val())) {
+        setUsers((prev) => [...prev, item[1]]);
+      }
     });
   }, []);
+  useEffect(() => {
+    users.map((i) => console.log(i));
+  }, [users]);
   useEffect(() => {
     if (_userState) {
       console.log(_userState);
@@ -107,54 +114,38 @@ export default function App() {
         </Navbar.Collapse>
         {/* </Container> */}
       </Navbar>
-      {!_userState.name ? ( // if user isn't logged yet.. then show him login window.
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "row",
-            flexWrap: "wrap",
-          }}
-        >
-          <Button
-            onClick={() => {
-              logar();
-            }}
-          >
-            Logar
-          </Button>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(() => {
-            return (
-              <>
-                <Draggable>
-                  <Card
-                    bg="dark"
-                    className="text-light"
-                    style={{ width: "18rem" }}
-                  >
-                    <Card.Img
-                      className="undraggable"
-                      variant="top"
-                      src="https://pbs.twimg.com/media/D-F5tEEXoAEul3-.png"
-                    />
-                    <Card.Body>
-                      <Card.Title>Card Title</Card.Title>
-                      <Card.Text>
-                        Some quick example text to build on the card title and
-                        make up the bulk of the card's content.
-                      </Card.Text>
-                      <Button variant="primary">Go somewhere</Button>
-                    </Card.Body>
-                  </Card>
-                </Draggable>
-              </>
-            );
-          })}
-        </div>
+      {_actualConversation ? ( // if user isn't logged yet.. then show him login window.
+        <Chat style={{ display: "flex", flex: "1", height: "100%" }} />
       ) : (
         <>
-          <Chat style={{ display: "flex", flex: "1", height: "100%" }} />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "row",
+              flexWrap: "wrap",
+              flexShrink: 0,
+            }}
+          >
+            <Button
+              onClick={() => {
+                logar();
+              }}
+            >
+              Logar
+            </Button>
+            {users &&
+              users.map((user) => {
+                return (
+                  <Card
+                    picture={user.photoUrl}
+                    username={user.beautifulName}
+                    uid={user.uid}
+                  ></Card>
+                );
+              })}
+          </div>
         </>
       )}
     </>

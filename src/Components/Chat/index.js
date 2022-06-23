@@ -3,26 +3,39 @@ import { v4 as uuid } from "uuid";
 import Draggable from "react-draggable";
 import { FaArrowCircleRight } from "react-icons/fa";
 import { getAuth, signInWithPopup } from "firebase/auth";
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, ref, set, onValue } from "firebase/database";
 import { app } from "../../Config/firebase.js";
 import useSound from "use-sound";
+import { actualConversation, userState } from "../../atoms/index.js";
+import { useRecoilState } from "recoil";
 import bubbleSound from "../../Assets/sounds/bubble-sound.wav";
 import { getHoursAndMinutes, capitalize } from "../../Assets/utils.js";
 import CryptoJS from "react-native-crypto-js";
+import { get_chat, send_message_to_chat } from "../../Assets/firebaseFunctions.js";
+
 
 export default function Chat() {
   const [playSound] = useSound(bubbleSound, { volume: 0.1 });
-  const [conversation, setConversation] = useState([
-    { key: uuid(), message: "Lorem ipsum " },
-  ]);
+  const [_actualConversation, _setActualConversation] = useRecoilState(actualConversation);
+  const [_userState, setUserState] = useRecoilState(userState);
+  const [chat, setChat] = useState();
   const chatDiv = useRef(null);
   const [entryText, setEntryText] = useState("");
   const [shouldScroll, setShouldScroll] = useState(false);
   const db = getDatabase();
-  // useEffect(() => {}, []);
+
+  useEffect(() => {
+    let conversationRef = ref(db, 'conversations/'+ _actualConversation.conversationPair + '/chat');
+    onValue(conversationRef, snapshot => {
+      snapshot.exists() && setChat(Object.values(snapshot.val()));
+
+    })
+    // get_chat(_actualConversation.conversationPair).then((data)=>{
+    //   console.log(data.val());
+    // })
+  }, []);
   useEffect(() => {
     playSound();
-    console.log(conversation);
     let encryptedMessage = CryptoJS.AES.encrypt(
       "this is the secret message.",
       "music4ever"
@@ -32,7 +45,7 @@ export default function Chat() {
         CryptoJS.enc.Utf8
       )
     );
-  }, [conversation]);
+  }, [chat]);
   async function conversationScrollSystem(ref) {
     if (ref?.current) {
       let scrollableList = ref?.current;
@@ -44,18 +57,27 @@ export default function Chat() {
       }
     }
   }
-  async function addText() {
-    await setConversation((conversation) => [
-      ...conversation,
-      { message: entryText, date: new Date().toString() },
-    ]);
-    setEntryText("");
-    chatDiv?.current?.scrollTo({
-      top: chatDiv.current.scrollHeight,
-      behavior: "smooth",
-    });
-    // console.log(chatDiv.current);
+  async function addText(){
+    send_message_to_chat(_actualConversation.conversationPair,_userState.uid, entryText);
   }
+  // async function addText() {
+  //   if (chat === undefined) {
+  //     await setChat((chat) => [
+  //       { message: entryText, date: new Date().toString() },
+  //     ]);
+  //   } else {
+  //     await setChat((chat) => [
+  //       ...chat,
+  //       { message: entryText, date: new Date().toString() },
+  //     ]);
+  //     chatDiv?.current?.scrollTo({
+  //       top: chatDiv.current.scrollHeight,
+  //       behavior: "smooth",
+  //     });
+  //     console.log(chatDiv.current);
+  //   }
+  //   setEntryText("");
+  // }
 
   return (
     <>
@@ -77,12 +99,12 @@ export default function Chat() {
           <h1>{entryText}</h1>
         </div>
         <div id="bubblesDiv">
-          {conversation.map((i, key) => {
+          {chat && chat.map((i, key) => {
             return (
               <div
                 key={key}
                 id="chat-body"
-                className={key % 2 == 0 ? "flex-right" : "flex-left"}
+                className={i.from === _userState.uid ? "flex-right" : "flex-left"}
               >
                 <div id="chat-content">
                   <div
@@ -91,14 +113,14 @@ export default function Chat() {
                       flexDirection: "column",
                       alignSelf: "center",
                     }}
-                    id={key % 2 == 0 ? "chat-bubble-right" : "chat-bubble-left"}
+                    id={i.from === _userState.uid ? "chat-bubble-right" : "chat-bubble-left"}
                   >
-                    {capitalize(i.message)}
+                    {capitalize(i?.message)}
                     <div
                       id="chat-time"
                       style={{ color: "white", alignSelf: "flex-end" }}
                     >
-                      {getHoursAndMinutes(i?.date)}
+                      {i?.at}
                     </div>
                   </div>
                 </div>
