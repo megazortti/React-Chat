@@ -25,7 +25,7 @@ export default function Chat() {
   const db = getDatabase();
 
   useEffect(() => {
-    let conversationRef = ref(db, 'conversations/'+ _actualConversation.conversationPair + '/chat');
+    let conversationRef = ref(db, 'conversations/' + _actualConversation.conversationPair + '/chat');
     onValue(conversationRef, snapshot => {
       snapshot.exists() && setChat(Object.values(snapshot.val()));
 
@@ -36,15 +36,10 @@ export default function Chat() {
   }, []);
   useEffect(() => {
     playSound();
-    let encryptedMessage = CryptoJS.AES.encrypt(
-      "this is the secret message.",
-      "music4ever"
-    ).toString();
-    console.log(
-      CryptoJS.AES.decrypt(encryptedMessage, "music4ever").toString(
-        CryptoJS.enc.Utf8
-      )
-    );
+    chatDiv?.current?.scrollTo({
+      top: chatDiv.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [chat]);
   async function conversationScrollSystem(ref) {
     if (ref?.current) {
@@ -57,27 +52,10 @@ export default function Chat() {
       }
     }
   }
-  async function addText(){
-    send_message_to_chat(_actualConversation.conversationPair,_userState.uid, entryText);
+  async function addText() {
+    send_message_to_chat(_actualConversation.conversationPair, _userState.uid, entryText);
+    setEntryText("");
   }
-  // async function addText() {
-  //   if (chat === undefined) {
-  //     await setChat((chat) => [
-  //       { message: entryText, date: new Date().toString() },
-  //     ]);
-  //   } else {
-  //     await setChat((chat) => [
-  //       ...chat,
-  //       { message: entryText, date: new Date().toString() },
-  //     ]);
-  //     chatDiv?.current?.scrollTo({
-  //       top: chatDiv.current.scrollHeight,
-  //       behavior: "smooth",
-  //     });
-  //     console.log(chatDiv.current);
-  //   }
-  //   setEntryText("");
-  // }
 
   return (
     <>

@@ -7,8 +7,9 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { beautify_name } from "./Assets/utils.js";
 import { User } from "./Assets/structures.js";
-import { getDatabase, ref, set, get, child } from "firebase/database";
+import { getDatabase, ref, set, get, child, onValue } from "firebase/database";
 import { Card } from "./Components/Card/index.js";
+import { get_chat } from "./Assets/firebaseFunctions";
 
 import {
   Navbar,
@@ -34,11 +35,13 @@ export default function App() {
   const usersRef = ref(database, "users");
   //////////////////////////////////////////////////////////////
   useEffect(() => {
-    get(usersRef).then((snapshot) => {
-      for (const item of Object.entries(snapshot.val())) {
-        setUsers((prev) => [...prev, item[1]]);
-      }
+    onValue(usersRef, snapshot => {
+      // for (const item of Object.entries(snapshot.val())) {
+      //   setUsers((prev) => [...prev, item[1]]);
+      // }
+      setUsers(Object.values(snapshot.val()));
     });
+
   }, []);
   useEffect(() => {
     users.map((i) => console.log(i));
@@ -95,7 +98,7 @@ export default function App() {
           <Nav className="me-auto">
             <Nav.Link href="#features">Features</Nav.Link>
           </Nav>
-          <Nav style={{}}>
+          <Nav>
             <NavDropdown
               align="end"
               title="Configurações"
@@ -104,7 +107,7 @@ export default function App() {
               <NavDropdown.Item href="#action/3.2">
                 Minha conta
               </NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.3">Sair</NavDropdown.Item>
+              <NavDropdown.Item onClick={() => { _setActualConversation(null); }}>Sair</NavDropdown.Item>
               <NavDropdown.Divider />
               <NavDropdown.Item href="#action/3.4">
                 Excluir minha conta
